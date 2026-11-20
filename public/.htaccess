@@ -1,0 +1,109 @@
+# =============================================================================
+# recensementguide.bj — configuration Apache du site public
+#
+# Ce fichier est copié tel quel dans `dist/` par Vite : il part avec le build,
+# et n'a pas à être réinstallé à la main à chaque déploiement.
+#
+# Il répond aux constats T-03 (en-têtes de sécurité), T-05 (compression) et
+# T-06 (cache des ressources versionnées) de l'audit du 20 août 2026. Trois
+# points de ce même audit ne peuvent PAS être traités ici et relèvent de la
+# configuration du serveur (ServerTokens/ServerSignature pour T-04, mod_http2
+# pour T-09, retrait de l'authentification Basic pour C-02) : `.htaccess` est
+# lu trop tard dans le cycle d'Apache pour les uns, et hors de son périmètre
+# pour les autres.
+#
+# Chaque bloc est gardé par <IfModule> : sur un hébergement où le module manque,
+# la directive est ignorée au lieu de renvoyer une erreur 500 sur tout le site.
+# =============================================================================
+
+# --- Compression (T-05) ------------------------------------------------------
+# Le bundle fait ~215 Ko, la feuille de style ~33 Ko ; compressés, ~68 et ~7 Ko.
+# Sur une connexion mobile de campagne, c'est la différence entre un formulaire
+# qui s'ouvre et un visiteur qui s'en va.
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/xml text/css
+  AddOutputFilterByType BROTLI_COMPRESS text/javascript application/javascript
+  AddOutputFilterByType BROTLI_COMPRESS application/json application/xml image/svg+xml
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
+  AddOutputFilterByType DEFLATE text/javascript application/javascript
+  AddOutputFilterByType DEFLATE application/json application/xml image/svg+xml
+</IfModule>
+
+# --- Cache navigateur (T-06) -------------------------------------------------
+<IfModule mod_headers.c>
+  # Les fichiers de /assets/ portent un hachage dans leur nom : leur contenu ne
+  # change jamais sans que leur nom change. Ils peuvent donc être gardés un an
+  # sans revalidation — un déploiement produit de nouveaux noms.
+  <FilesMatch "\.(js|css|woff2?|jpe?g|png|webp|avif|svg|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  # `index.html`, lui, garde les noms des fichiers à charger : mis en cache, il
+  # servirait indéfiniment l'ancienne version du site.
+  <FilesMatch "^(index\.html|robots\.txt|sitemap\.xml)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+# --- En-têtes de sécurité (T-03) ---------------------------------------------
+<IfModule mod_headers.c>
+  # Le navigateur n'essaiera plus jamais ce domaine en clair. À n'activer
+  # qu'une fois HTTPS confirmé sur le domaine ET ses sous-domaines : la
+  # directive est irrévocable pendant sa durée de vie.
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+  # Le site ne demande ni caméra, ni micro, ni position : autant le déclarer.
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(self \"https://cdn.fedapay.com\"), interest-cohort=()"
+
+  # Politique de sécurité du contenu. Les seuls tiers du parcours y figurent, et
+  # rien d'autre : les polices Google, l'API du registre, la fenêtre de
+  # paiement FedaPay, et Google reCAPTCHA v3 (script sur www.google.com et
+  # www.gstatic.com, iframe invisible sur www.google.com).
+  #
+  # `'unsafe-inline'` sur `style-src` est nécessaire : React pose des styles en
+  # ligne (infobulles du formulaire) et Vite injecte la feuille de style. Il
+  # n'est PAS accordé à `script-src` — c'est celui-là qui compte.
+  #
+  # À ÉPROUVER UNE FOIS EN LIGNE : dérouler un paiement FedaPay de bout en bout,
+  # console du navigateur ouverte. Si la fenêtre de paiement injecte un script
+  # en ligne, la console signalera un blocage CSP. Deux issues alors, par ordre
+  # de préférence : ajouter la source précise que FedaPay réclame, ou renommer
+  # temporairement cet en-tête en `Content-Security-Policy-Report-Only` — jamais
+  # ajouter `'unsafe-inline'` à `script-src`, qui rendrait la directive inutile.
+  Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://cdn.fedapay.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://api.recensementguide.bj https://*.fedapay.com https://www.google.com; frame-src https://*.fedapay.com https://www.google.com; upgrade-insecure-requests"
+
+  # Apache annonce sa version et celle de PHP (T-04). ServerTokens ne se règle
+  # qu'au niveau du serveur, mais l'en-tête de PHP, lui, part d'ici.
+  Header always unset X-Powered-By
+</IfModule>
+
+# --- Routage de l'application monopage ---------------------------------------
+# Les adresses `?page=…` et `?suivi=…` fonctionnent sans cette règle : c'est
+# volontaire (cf. src/App.jsx). Elle rend en plus lisibles les chemins
+# `/suivi/GT-26-…` et `/confidentialite`, plus simples à dicter au téléphone.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Un fichier qui existe est servi tel quel : ni les assets, ni robots.txt, ni
+  # sitemap.xml ne doivent tomber dans l'application.
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# --- Types servis correctement -----------------------------------------------
+<IfModule mod_mime.c>
+  AddType application/xml .xml
+  AddType image/webp .webp
+  AddType font/woff2 .woff2
+</IfModule>

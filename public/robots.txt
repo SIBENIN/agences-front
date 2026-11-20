@@ -1,0 +1,12 @@
+# Registre National des Guides de Tourisme — agences.benintourisme.bj
+#
+# Campagne publique : tout est indexable. Seules les adresses de suivi de
+# dossier sont écartées — elles portent un numéro de suivi personnel, qui n'a
+# rien à faire dans un index de moteur de recherche.
+
+User-agent: *
+Allow: /
+Disallow: /suivi/
+Disallow: /*?suivi=
+
+Sitemap: https://agences.benintourisme.bj/sitemap.xml

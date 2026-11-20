@@ -1,0 +1,258 @@
+/* ==========================================================================
+   Questions fréquentes — l'accordéon de la page `?page=faq`.
+
+   Une carte par question, dans la mesure des pages d'information (780 px).
+   L'usager balaie les intitulés et n'en ouvre qu'un : la réponse se déplie
+   dans sa propre carte, sous l'intitulé cliqué, et les autres restent
+   fermées. Rien ne bouge au-dessus de la ligne qu'il vient de toucher.
+   ========================================================================== */
+
+.faq {
+  margin-top: 4px;
+}
+
+/* --- Chapeau ---------------------------------------------------------------
+   Une seule phrase avant la liste, détachée d'elle : c'est là que se trouve
+   l'adresse à qui écrire quand aucune des douze réponses ne convient. */
+
+.faq__chapeau {
+  max-width: 62ch;
+  margin: 0 0 30px;
+  font-size: 15.5px;
+  line-height: 1.75;
+  color: var(--color-text-soft);
+}
+
+/* --- La liste --------------------------------------------------------------
+   Des cartes espacées plutôt qu'une liste à filets : un accordéon qui n'ouvre
+   qu'une réponse à la fois a besoin qu'on voie où commence et où finit celle
+   qui est ouverte. L'écart entre cartes reste serré (8 px) pour que les douze
+   intitulés se lisent encore comme une seule liste. */
+
+.faq__liste {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.faq__item {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: border-color .15s ease, box-shadow .2s ease;
+}
+
+.faq__item:hover {
+  border-color: var(--color-border-input);
+}
+
+/* La carte ouverte se détache : bordure verte et ombre portée. C'est le seul
+   repère de lecture une fois la réponse dépliée. */
+.faq__item--ouvert,
+.faq__item--ouvert:hover {
+  border-color: var(--color-green);
+  box-shadow: var(--shadow-card);
+}
+
+/* `<h2>` de structure : sa mise en forme est portée par le bouton qu'il
+   contient, il ne doit rien ajouter. Le sélecteur descend de `.infos__corps`
+   parce que la feuille des pages d'information y met déjà les `h2` en forme —
+   ici, ces marges et ce corps décaleraient les questions de la liste. */
+.infos__corps .faq__question,
+.faq__question {
+  margin: 0;
+  font: inherit;
+  color: inherit;
+}
+
+/* Le bouton occupe toute la carte : c'est la cible, et elle doit couvrir la
+   ligne entière — viser un intitulé de trois mots au doigt est une épreuve. */
+.faq__bouton {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  padding: 19px 20px;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.faq__bouton:hover .faq__intitule {
+  color: var(--color-green);
+}
+
+.faq__bouton:focus-visible {
+  outline: 2px solid var(--color-green);
+  outline-offset: -2px;
+}
+
+.faq__intitule {
+  flex: 1;
+  font-family: var(--font-heading);
+  font-size: 16.5px;
+  line-height: 1.45;
+  font-weight: 600;
+  color: var(--color-text);
+  transition: color .15s ease;
+}
+
+.faq__item--ouvert .faq__intitule {
+  color: var(--color-green);
+}
+
+/* Chevron dessiné en CSS : deux traits d'un carré tourné à 45°. Une icône de
+   plus ne vaut pas un fichier de plus dans un site sans bibliothèque
+   d'icônes. */
+.faq__chevron {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  position: relative;
+  border-radius: 50%;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  transition: background-color .15s ease, border-color .15s ease, transform .2s ease;
+}
+
+.faq__chevron::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border-right: 1.8px solid var(--color-muted);
+  border-bottom: 1.8px solid var(--color-muted);
+  transform: translate(-50%, -70%) rotate(45deg);
+  transition: border-color .15s ease;
+}
+
+.faq__bouton:hover .faq__chevron {
+  border-color: var(--color-green);
+  background: var(--color-green-soft);
+}
+
+.faq__bouton:hover .faq__chevron::before {
+  border-color: var(--color-green);
+}
+
+.faq__item--ouvert .faq__chevron {
+  background: var(--color-green);
+  border-color: var(--color-green);
+  transform: rotate(180deg);
+}
+
+.faq__item--ouvert .faq__chevron::before {
+  border-color: #fff;
+}
+
+/* --- La réponse ------------------------------------------------------------
+   Elle reste dans le document quand elle est repliée (hauteur nulle) plutôt
+   que d'être retirée : c'est ce qui permet à l'impression de tout révéler, et
+   au dépliage de s'animer. */
+
+.faq__reponse {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows .22s ease;
+}
+
+.faq__reponse--repliee {
+  grid-template-rows: 0fr;
+}
+
+.faq__reponse-corps {
+  overflow: hidden;
+}
+
+.faq__reponse--repliee .faq__reponse-corps {
+  /* Le contenu replié ne doit être atteignable ni à la tabulation ni au
+     lecteur d'écran : une hauteur nulle ne suffit pas pour les liens qu'il
+     contient. */
+  visibility: hidden;
+}
+
+/* Le texte est en retrait à droite de la colonne du chevron, et un filet le
+   sépare de l'intitulé : sans lui, question et réponse se lisent d'un seul
+   bloc dans la carte ouverte. */
+.faq__reponse-texte {
+  margin: 0 66px 20px 20px;
+  padding-top: 17px;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.faq__reponse-texte p {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--color-text-soft);
+}
+
+.faq__reponse-texte p + p {
+  margin-top: 13px;
+}
+
+@media (max-width: 640px) {
+  .faq__chapeau {
+    margin-bottom: 22px;
+  }
+
+  .faq__intitule {
+    font-size: 15.5px;
+  }
+
+  .faq__bouton {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  /* Le retrait de droite disparaît : sur un écran étroit, la mesure ne peut
+     pas payer 66 px pour dégager la colonne du chevron. */
+  .faq__reponse-texte {
+    margin: 0 16px 16px;
+    padding-top: 14px;
+  }
+}
+
+/* Le dépliage n'anime rien pour qui a demandé moins de mouvement : seul
+   l'état compte. */
+@media (prefers-reduced-motion: reduce) {
+  .faq__reponse,
+  .faq__chevron {
+    transition: none;
+  }
+}
+
+@media print {
+  /* Sur papier, une FAQ se lit d'un bout à l'autre : tout est déplié, et le
+     chevron qui sert à ouvrir n'a plus d'objet. */
+  .faq__chevron {
+    display: none;
+  }
+
+  .faq__reponse,
+  .faq__reponse--repliee {
+    grid-template-rows: 1fr;
+  }
+
+  .faq__reponse--repliee .faq__reponse-corps {
+    visibility: visible;
+  }
+
+  .faq__item {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+
+  .faq__item--ouvert {
+    border-color: var(--color-border);
+  }
+
+  .faq__item--ouvert .faq__intitule {
+    color: var(--color-text);
+  }
+}

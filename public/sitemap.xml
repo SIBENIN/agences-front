@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Les pages d'information s'ouvrent par `?page=…` et non par un chemin : c'est
+  la forme qui fonctionne quel que soit l'hébergement, sans règle de réécriture
+  (cf. src/App.jsx). Ce sont donc ces adresses-là qui sont déclarées ici, parce
+  qu'un plan de site ne doit lister que des adresses qui répondent.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://agences.benintourisme.bj/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://agences.benintourisme.bj/?page=faq</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://agences.benintourisme.bj/?page=confidentialite</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://agences.benintourisme.bj/?page=mentions-legales</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset>

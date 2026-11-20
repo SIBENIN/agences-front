@@ -1,0 +1,198 @@
+/* ==========================================================================
+   Pages d'information : mentions légales, confidentialité, conditions de
+   paiement, questions fréquentes.
+
+   Du texte long, et rien d'autre : la mesure est bornée pour rester lisible,
+   et la hiérarchie tient dans deux niveaux de titre. Ces pages doivent pouvoir
+   être imprimées ou envoyées telles quelles à un usager qui les réclame.
+   ========================================================================== */
+
+.infos {
+  max-width: 780px;
+}
+
+/* --- En-tête ---------------------------------------------------------------
+   Trois lignes distinctes — retour, dispositif, titre — et un filet qui les
+   sépare du corps. Ce filet fait aussi tenir la page tant qu'elle est vide :
+   sans lui, un titre flotte seul au milieu du blanc. */
+
+.infos__entete {
+  padding-bottom: 26px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.infos__retour {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 30px;
+  padding: 7px 14px 7px 11px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 600;
+  transition: color .15s ease, border-color .15s ease, background-color .15s ease;
+}
+
+.infos__retour:hover {
+  border-color: var(--color-green);
+  background: var(--color-green-soft);
+  color: var(--color-green);
+  text-decoration: none;
+}
+
+.infos__retour-fleche {
+  font-size: 15px;
+  line-height: 1;
+  transition: transform .15s ease;
+}
+
+.infos__retour:hover .infos__retour-fleche {
+  transform: translateX(-3px);
+}
+
+/* Le nom du dispositif surmonte le titre : même rôle que l'`eyebrow` du reste
+   du site, mais en bloc — c'est son affichage en ligne qui le collait au
+   bouton de retour. */
+.infos__eyebrow {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted-3);
+}
+
+.infos__titre {
+  font-family: var(--font-heading);
+  font-size: 34px;
+  line-height: 1.12;
+  letter-spacing: -0.8px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+/* Un trait aux couleurs du drapeau sous le titre, comme sur le bandeau
+   d'accueil : ces pages appartiennent au même site. */
+.infos__titre::after {
+  content: '';
+  display: block;
+  width: 74px;
+  height: 3px;
+  margin-top: 16px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--flag-green), var(--flag-yellow), var(--flag-red));
+}
+
+/* --- Corps ----------------------------------------------------------------- */
+
+.infos__corps {
+  margin-top: 30px;
+}
+
+.infos__corps h2 {
+  font-family: var(--font-heading);
+  font-size: 19px;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 34px 0 10px;
+}
+
+.infos__corps h2:first-child {
+  margin-top: 0;
+}
+
+.infos__corps p,
+.infos__liste {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--color-text-soft);
+}
+
+.infos__corps p + p {
+  margin-top: 14px;
+}
+
+.infos__liste {
+  margin: 14px 0 0;
+  padding-left: 20px;
+}
+
+.infos__liste li + li {
+  margin-top: 8px;
+}
+
+.infos__corps a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* --- Documents légaux ------------------------------------------------------
+   Mentions légales et politique de confidentialité : une suite d'articles
+   numérotés. Chacun vit dans sa `<section>`, ce qui donne au lecteur — et au
+   lecteur d'écran — des blocs qu'on peut citer par leur numéro.
+
+   L'écart entre articles est porté par la section, et non par les `h2` : à
+   l'intérieur d'une `<section>`, le titre est premier enfant, et la règle
+   `h2:first-child` ci-dessus lui retire sa marge haute. */
+
+.doc-legal__section + .doc-legal__section {
+  margin-top: 34px;
+}
+
+/* Le numéro se détache du titre sans le concurrencer : c'est un repère, pas
+   une information. */
+.doc-legal__numero {
+  color: var(--color-muted-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Un paragraphe qui suit une liste retrouve l'écart des paragraphes entre eux :
+   la règle `p + p` ne le voit pas, et il se collait au dernier point de la
+   liste — souvent la phrase qui la nuance. */
+.infos__corps .infos__liste + p {
+  margin-top: 14px;
+}
+
+/* L'intitulé d'un point de liste — « Identité : », « Coordonnées : » — se
+   distingue par la couleur du texte courant plutôt que par une graisse forte :
+   une énumération de dix points en gras se lit comme un cri. */
+.infos__liste li strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+@media print {
+  /* Un article ne se coupe pas en deux pages tant qu'il tient sur une : ces
+     documents sont imprimés pour être cités article par article. */
+  .doc-legal__section {
+    break-inside: avoid;
+  }
+}
+
+@media (max-width: 640px) {
+  .infos__titre {
+    font-size: 26px;
+  }
+
+  .infos__retour {
+    margin-bottom: 22px;
+    min-height: 40px;
+  }
+}
+
+@media print {
+  /* Ces pages sont parfois imprimées pour être versées à un dossier : le
+     retour à l'accueil n'a alors aucun sens. */
+  .infos__retour,
+  .site-footer__reseaux {
+    display: none;
+  }
+
+  .infos__entete {
+    border-bottom: none;
+  }
+}

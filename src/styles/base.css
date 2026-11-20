@@ -1,0 +1,819 @@
+/* ==========================================================================
+   Design tokens
+   ========================================================================== */
+
+:root {
+  --color-bg: #F7F3EA;
+  --color-surface: #FFFFFF;
+  --color-surface-soft: #FBF9F3;
+  --color-input-bg: #FCFBF7;
+  --color-text: #12211B;
+  --color-text-soft: #33453C;
+  --color-muted: #52625A;
+  --color-muted-2: #7C8B82;
+  --color-muted-3: #8A9990;
+
+  --color-green: #0A4A35;
+  --color-green-dark: #063527;
+  --color-green-soft: #E6F2EC;
+
+  --color-border: #E2DBCB;
+  --color-border-soft: #EFEAE0;
+  --color-border-input: #D9D2C2;
+
+  --color-danger: #A8202F;
+  --color-danger-bg: #FBE3E5;
+  --color-danger-border: #F3B9C0;
+
+  --color-gold: #F2B705;
+  --color-gold-bg: #FCF3D9;
+  --color-gold-border: #F0DFA0;
+  --color-gold-text: #8A6200;
+
+  --flag-green: #008751;
+  --flag-yellow: #FCD116;
+  --flag-red: #E8112D;
+
+  --font-heading: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgba(6, 53, 39, 0.04), 0 18px 40px -30px rgba(6, 53, 39, 0.35);
+  --shadow-float: 0 1px 2px rgba(6, 53, 39, 0.04), 0 24px 60px -30px rgba(6, 53, 39, 0.35);
+
+  --container-max: 1320px;
+
+  /* Taille du texte des champs de saisie. Elle passe à 16 px sur petit écran
+     (cf. « Responsive ») : en dessous, Safari sur iPhone zoome dans la page à
+     chaque champ touché, et ne dézoome pas en le quittant. */
+  --font-size-input: 14.5px;
+}
+
+/* ==========================================================================
+   Reset
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Le fond du `body` n'apparaît qu'au-delà de la page : dans l'élan de défilement
+   qui rebondit sous le pied de page. Il porte donc le vert du pied de page, et
+   non le beige du contenu — sinon une bande claire se glisse sous lui. */
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-green-dark);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* React monte tout dans `#root` : sans cette règle, la colonne flex de `body`
+   n'a qu'un seul enfant, et le `flex: 1` de `.page-main` comme le
+   `margin-top: auto` du pied de page ne portent sur rien. Une page courte
+   (suivi sans résultat, inscriptions closes) laissait alors une bande de fond
+   sous le pied de page. C'est ici que la colonne doit vivre. */
+#root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  /* Garde-fou : rien de ce qui dépasserait à droite ne doit faire défiler le
+     site à l'horizontale sur un téléphone. `clip` et non `hidden`, qui
+     créerait un conteneur de défilement et casserait les éléments collants. */
+  overflow-x: clip;
+}
+
+h1, h2, h3, h4, p {
+  margin: 0;
+}
+
+a {
+  color: var(--color-green);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-green-dark);
+  text-decoration: underline;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+input, select, textarea, button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+input, select, textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+label {
+  min-width: 0;
+}
+
+button {
+  cursor: pointer;
+}
+
+input:focus, select:focus, textarea:focus, button:focus-visible {
+  outline: 2px solid var(--color-green);
+  outline-offset: 1px;
+}
+
+::placeholder {
+  color: #9BA79F;
+}
+
+/* ==========================================================================
+   Layout helpers
+   ========================================================================== */
+
+.page-main {
+  /* Pousse le pied de page en bas de l'écran quand le contenu ne le remplit
+     pas ; au-delà, la page défile normalement. */
+  flex: 1;
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 44px 40px 64px;
+}
+
+/* Lien d'évitement : hors de l'écran tant qu'il n'a pas le focus, puis posé
+   au-dessus de tout. Premier arrêt de la tabulation, il épargne au clavier et
+   au lecteur d'écran la traversée du bandeau à chaque page. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 12px 18px;
+  background: var(--color-green);
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 0 0 var(--radius-md) 0;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(252, 251, 247, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.site-header__accent {
+  height: 3px;
+  background: linear-gradient(90deg, var(--flag-green) 0%, var(--flag-yellow) 50%, var(--flag-red) 100%);
+}
+
+.site-header__bar {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 15px 40px;
+  border-bottom: 1px solid #E7E1D2;
+  box-shadow: 0 1px 0 rgba(6, 53, 39, 0.02), 0 6px 16px -14px rgba(6, 53, 39, 0.4);
+}
+
+.site-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.site-header__logo {
+  height: 34px;
+  width: auto;
+}
+
+.site-header__divider {
+  width: 1px;
+  height: 24px;
+  background: var(--color-border);
+}
+
+.site-header__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.site-header__title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.2px;
+  color: var(--color-text);
+}
+
+.site-header__subtitle {
+  font-size: 11px;
+  color: var(--color-muted-3);
+  letter-spacing: 0.01em;
+}
+
+.site-header__spacer {
+  flex: 1;
+}
+
+.site-header__nav {
+  display: flex;
+  gap: 4px;
+  background: #EFE9D9;
+  padding: 4px;
+  border-radius: var(--radius-pill);
+}
+
+.nav-link {
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  border: none;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: transparent;
+  color: var(--color-muted);
+}
+
+.nav-link.is-active {
+  background: var(--color-green);
+  color: #FFFFFF;
+}
+
+.site-header__badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 13px 7px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--color-gold-bg);
+  border: 1px solid var(--color-gold-border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-gold-text);
+}
+
+.site-header__badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #C98F00;
+}
+
+.site-header__user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-green);
+  color: #FFFFFF;
+  display: grid;
+  place-items: center;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background-color .15s, color .15s, border-color .15s;
+}
+
+.btn-primary {
+  background: var(--color-green);
+  color: #FFFFFF;
+  box-shadow: 0 8px 18px -12px rgba(6, 53, 39, 0.9);
+}
+
+.btn-primary:hover {
+  background: var(--color-green-dark);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--color-border-input);
+  color: var(--color-text-soft);
+}
+
+.btn-ghost:hover {
+  border-color: var(--color-green);
+  color: var(--color-green);
+}
+
+/* Bouton inactif : sert au formulaire à signaler qu'il manque une information
+   obligatoire (étape 2) ou qu'une opération est déjà en cours. Sans cette
+   règle, un bouton désactivé gardait exactement l'aspect d'un bouton cliquable.
+   Le :hover est neutralisé pour ne pas démentir le grisé. */
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-primary:disabled:hover {
+  background: var(--color-green);
+}
+
+.btn-ghost:disabled:hover {
+  border-color: var(--color-border-input);
+  color: var(--color-text-soft);
+}
+
+.btn-pill {
+  border-radius: var(--radius-pill);
+}
+
+.btn-link {
+  background: transparent;
+  border: none;
+  color: var(--color-green);
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 0;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* ==========================================================================
+   Cards / badges
+   ========================================================================== */
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.eyebrow {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted-3);
+}
+
+.field-error {
+  display: block;
+  font-size: 12px;
+  color: var(--color-danger);
+  font-weight: 600;
+  min-height: 15px;
+}
+
+.form-banner {
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-danger);
+  padding: 13px 16px;
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.form-field__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-soft);
+}
+
+.form-field__required {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.form-field__hint {
+  color: var(--color-muted-3);
+  font-weight: 500;
+}
+
+.form-field input[type="text"],
+.form-field input[type="email"],
+.form-field input[type="tel"],
+.form-field input[type="url"],
+.form-field input[type="password"],
+.form-field input[type="date"],
+.form-field input[type="number"],
+.form-field input:not([type]),
+.form-field select,
+.form-field textarea {
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-md);
+  background: var(--color-input-bg);
+  font-size: var(--font-size-input);
+}
+
+/* Téléphone avec indicatif (react-phone-number-input) : le drapeau et le
+   numéro forment une seule case, à l'aspect des autres champs. */
+.form-field .phone-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-md);
+  background: var(--color-input-bg);
+  --PhoneInputCountryFlag-height: 1.1em;
+  --PhoneInputCountrySelectArrow-color: currentColor;
+  --PhoneInputCountryFlag-borderColor: var(--color-border-input);
+}
+
+.form-field .phone-input:focus-within {
+  outline: 2px solid var(--color-green);
+  outline-offset: 1px;
+}
+
+.form-field .phone-input.is-invalid {
+  border-color: var(--color-danger);
+}
+
+.form-field .phone-input .PhoneInputCountry {
+  align-self: stretch;
+  padding-right: 10px;
+  border-right: 1px solid var(--color-border-input);
+}
+
+.form-field .phone-input input.PhoneInputInput {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: var(--font-size-input);
+}
+
+.form-field .phone-input input.PhoneInputInput:focus {
+  outline: none;
+}
+
+.form-field textarea {
+  height: auto;
+  min-height: 92px;
+  padding: 12px 14px;
+  resize: vertical;
+}
+
+/* Champ de saisie d'un entier (nombre de visites par mois). Les flèches
+   natives se logent dans le padding droit, changent de dessin d'un navigateur
+   à l'autre et n'apportent rien sur une valeur qui se tape : on les retire
+   pour que le champ ait l'aspect de tous les autres. `min` et `step` restent
+   posés sur le champ — ils continuent d'encadrer la valeur —, et
+   `inputMode="numeric"` donne le pavé numérique sur mobile. */
+.form-field input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.form-field input[type="number"]::-webkit-outer-spin-button,
+.form-field input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.form-field.has-error input,
+.form-field.has-error select,
+.form-field.has-error textarea {
+  border-color: #D9435A;
+}
+
+.form-field input:disabled,
+.form-field select:disabled {
+  background: var(--color-border-soft);
+  color: var(--color-muted);
+  cursor: not-allowed;
+}
+
+.form-field--lg input {
+  height: 52px;
+}
+
+/* Valeur affichée, non saisissable, à l'allure d'un champ verrouillé — mais
+   qui va à la ligne. Un `<input disabled>` coupe ce qui dépasse sans qu'on
+   puisse le faire défiler : sur téléphone, une adresse ou un nom composé n'y
+   étaient lisibles qu'à moitié. */
+.form-field__readonly {
+  display: block;
+  min-height: 46px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-md);
+  background: var(--color-border-soft);
+  color: var(--color-muted);
+  font-size: var(--font-size-input);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+.site-footer {
+  margin-top: auto;
+  background: var(--color-green-dark);
+  color: #B9CFC2;
+}
+
+.site-footer__top {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 46px 40px 30px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 44px;
+  justify-content: space-between;
+}
+
+.site-footer__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 320px;
+  /* Élément flex : sans cela il refuse de descendre sous la largeur des deux
+     logos, et toute la page défile à l'horizontale sur un téléphone. */
+  min-width: 0;
+}
+
+.site-footer__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  width: fit-content;
+}
+
+.site-footer__logo img {
+  width: auto;
+  filter: brightness(0) invert(1);
+}
+
+.site-footer__logo-agence {
+  height: 84px;
+}
+
+.site-footer__logo-ministere {
+  height: 48px;
+}
+
+.site-footer__desc {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: #9DBBAD;
+}
+
+.site-footer__col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.site-footer__col-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6E8A7B;
+}
+
+.site-footer__col a {
+  color: #CFE0D6;
+  font-size: 13px;
+}
+
+/* Réseaux sociaux : des pastilles cerclées, assez discrètes pour ne pas
+   concurrencer les liens de la colonne, assez grandes pour être touchées au
+   doigt (34 px). */
+.site-footer__reseaux {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.site-footer__col a.site-footer__reseau {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  color: #CFE0D6;
+  transition: color .15s ease, border-color .15s ease, background-color .15s ease;
+}
+
+.site-footer__col a.site-footer__reseau:hover {
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+
+.site-footer__horaires {
+  color: var(--color-muted-3);
+  font-weight: 400;
+}
+
+.site-footer__adresse {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #B9CFC2;
+}
+
+.site-footer__divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  max-width: var(--container-max);
+  margin: 0 auto;
+}
+
+.site-footer__bottom {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 18px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.site-footer__copyright {
+  font-size: 12px;
+  color: #7C9689;
+}
+
+.site-footer__flag {
+  display: flex;
+  height: 3px;
+  width: 110px;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.site-footer__flag span {
+  flex: 1;
+}
+
+.site-footer__flag span:nth-child(1) { background: var(--flag-green); }
+.site-footer__flag span:nth-child(2) { background: var(--flag-yellow); }
+.site-footer__flag span:nth-child(3) { background: var(--flag-red); }
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 720px) {
+  .site-header__bar {
+    padding: 12px 20px;
+    flex-wrap: wrap;
+  }
+
+  .site-header__subtitle {
+    display: none;
+  }
+
+  .page-main {
+    padding: 28px 20px 44px;
+  }
+
+  .site-footer__top,
+  .site-footer__bottom {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  :root {
+    --font-size-input: 16px;
+  }
+
+  /* Cibles tactiles : un lien de pied de page fait une ligne de texte de
+     haut. L'écart entre eux devient du remplissage, pour que le doigt porte
+     sur 40 px sans que la colonne s'allonge d'autant. */
+  .site-footer__col {
+    gap: 0;
+  }
+
+  .site-footer__col-title {
+    margin-bottom: 6px;
+  }
+
+  .site-footer__col a:not(.site-footer__reseau),
+  .site-footer__col .site-footer__lien-bouton {
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+  }
+
+  .site-footer__adresse {
+    padding: 8px 0;
+  }
+
+  .site-footer__col a.site-footer__reseau {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+/* Téléphones : les deux logos côte à côte dépassaient 320 px de large. */
+@media (max-width: 480px) {
+  .page-main {
+    padding: 22px 14px 36px;
+  }
+
+  .site-footer__top,
+  .site-footer__bottom {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .site-footer__top {
+    gap: 30px;
+  }
+
+  /* En dessous de 300 px environ, même réduits, les deux logos ne tiennent
+     plus côte à côte : le second passe dessous. */
+  .site-footer__logo {
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    max-width: 100%;
+  }
+
+  .site-footer__logo-agence {
+    height: 58px;
+  }
+
+  .site-footer__logo-ministere {
+    height: 33px;
+  }
+}

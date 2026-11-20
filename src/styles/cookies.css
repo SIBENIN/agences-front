@@ -1,0 +1,103 @@
+/* ==========================================================================
+   Bandeau de consentement aux cookies
+   ========================================================================== */
+
+.bandeau-cookies {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 100;
+  max-width: 440px;
+  padding: 22px 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-float);
+}
+
+.bandeau-cookies__titre {
+  margin: 0 0 8px;
+  font-family: var(--font-heading);
+  font-size: 18px;
+  color: var(--color-text);
+}
+
+.bandeau-cookies__texte {
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--color-text-soft);
+}
+
+.bandeau-cookies__texte a {
+  color: var(--color-green);
+  font-weight: 600;
+}
+
+.bandeau-cookies__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.bandeau-cookies__actions .btn {
+  flex: 1;
+}
+
+/* Sur téléphone le bandeau couvre le bas de l'écran — et, à l'arrivée, le
+   bouton d'inscription : il se fait aussi bas que possible. */
+@media (max-width: 720px) {
+  .bandeau-cookies {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    max-width: none;
+    padding: 16px 16px 14px;
+  }
+
+  .bandeau-cookies__titre {
+    font-size: 16px;
+  }
+
+  .bandeau-cookies__texte {
+    margin-bottom: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+/* Téléphone tenu en paysage : moins de 400 px de haut, dont le bandeau prenait
+   plus de la moitié. */
+@media (max-height: 480px) {
+  .bandeau-cookies {
+    padding: 12px 16px;
+  }
+
+  .bandeau-cookies__titre {
+    margin-bottom: 4px;
+    font-size: 15px;
+  }
+
+  .bandeau-cookies__texte {
+    margin-bottom: 10px;
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+
+  .bandeau-cookies__actions .btn {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+}
+
+/* « Gérer les cookies » : un bouton, puisqu'il n'ouvre pas de page, mais
+   présenté comme les liens de sa colonne. */
+.site-footer__col .site-footer__lien-bouton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #CFE0D6;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}

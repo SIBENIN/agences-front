@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Drapeau du Bénin">
+  <!--
+    Le drapeau béninois sur une toile carrée : bande verte au guindant sur les
+    deux cinquièmes de la largeur, jaune et rouge à parts égales sur le reste.
+    Les proportions officielles (3:2) ne tiennent pas dans une icône carrée ;
+    c'est le partage des couleurs qui rend le drapeau reconnaissable à 16 px,
+    pas son rapport largeur/hauteur.
+
+    En SVG, l'icône reste nette à toutes les tailles ; `favicon.ico` sert de
+    repli aux navigateurs qui l'ignorent, et porte le même dessin.
+  -->
+  <rect width="32" height="32" fill="#FCD116" />
+  <rect y="16" width="32" height="16" fill="#E8112D" />
+  <rect width="13" height="32" fill="#008751" />
+</svg>

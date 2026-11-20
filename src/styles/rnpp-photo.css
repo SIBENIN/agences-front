@@ -1,0 +1,91 @@
+/**
+ * Bloc final de l'encadré RNPP (étape 1) : nationalité, téléphone, adresse et
+ * photo d'identité — quatre attributs de la même personne, tous issus de la
+ * réponse de l'ANIP.
+ *
+ * La photo occupe une colonne à part, sur la hauteur des deux lignes de
+ * champs. Son cadre existe dès l'ouverture du formulaire, avant même la
+ * vérification du NPI : réserver la place évite que l'arrivée de l'image ne
+ * décale tout ce qui suit, et le cadre vide annonce ce que le RNPP va
+ * transmettre.
+ */
+
+.rnpp-final {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 20px 22px;
+  align-items: end;
+}
+
+.rnpp-final > .form-field {
+  min-width: 0;
+}
+
+.rnpp-final__adresse {
+  grid-column: 1 / 3;
+}
+
+.rnpp-final__photo {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  align-self: stretch;
+  width: 112px;
+  min-height: 150px;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px dashed var(--color-border-input);
+  background: var(--color-input-bg);
+}
+
+/* Cadre plein une fois la photo reçue : le pointillé ne signale plus une
+   place en attente. */
+.rnpp-final__photo:has(img) {
+  border-style: solid;
+  border-color: var(--color-border);
+  background: var(--color-surface);
+}
+
+.rnpp-final__photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.rnpp-final__photo-vide {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 10px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--color-muted-3);
+}
+
+.rnpp-final__photo-vide span {
+  font-weight: 500;
+  font-size: 10.5px;
+}
+
+/* En colonne, la photo passe en tête : elle garde sa place réservée sans
+   écraser la largeur des champs. */
+@media (max-width: 560px) {
+  .rnpp-final {
+    grid-template-columns: 1fr;
+  }
+
+  .rnpp-final__adresse {
+    grid-column: 1;
+  }
+
+  .rnpp-final__photo {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: center;
+  }
+}

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recensement des agences de voyage — Bénin</title>
+<meta name="description" content="Recensement des agences de voyage et de tourisme du Bénin : demande de licence en ligne auprès du Ministère du Tourisme et du Commerce Extérieur." />
+
+<!-- Indexation. Le site est ouvert aux moteurs : c'est une campagne publique,
+     et une agence qui cherche « licence agence de voyage Bénin » doit la trouver. -->
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://agences.benintourisme.bj/" />
+
+<!-- Aperçu de partage. Sans ces balises, un lien collé dans WhatsApp ou
+     Facebook n'affiche qu'une adresse nue : l'application est une SPA, et rien
+     dans le HTML initial ne renseigne un outil qui n'exécute pas JavaScript.
+     Les pages d'information réécrivent ces balises à l'ouverture
+     (cf. src/pages/InfosPage.jsx). -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Recensement des agences de voyage et de tourisme" />
+<meta property="og:locale" content="fr_FR" />
+<meta property="og:url" content="https://agences.benintourisme.bj/" />
+<meta property="og:title" content="Recensement des agences de voyage et de tourisme du Bénin" />
+<meta property="og:description" content="Enregistrez votre agence de voyage en ligne : demande de licence de votre nouvelle agence." />
+<meta property="og:image" content="https://agences.benintourisme.bj/assets/partage.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Visiteurs sur un site touristique du Bénin" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Recensement des agences de voyage et de tourisme du Bénin" />
+<meta name="twitter:description" content="Enregistrez votre agence de voyage en ligne auprès du Ministère du Tourisme." />
+<meta name="twitter:image" content="https://agences.benintourisme.bj/assets/partage.jpg" />
+
+<meta name="theme-color" content="#0A3F2E" />
+<!-- Le drapeau béninois, et rien d'autre : le logotype qui servait d'icône
+     n'était plus lisible à 16 px, taille à laquelle un onglet l'affiche. Le
+     SVG passe en premier — net à toutes les tailles ; le .ico reste pour les
+     navigateurs qui l'ignorent, et le PNG pour l'écran d'accueil iOS, qui
+     n'accepte pas le SVG. Les trois portent le même dessin. -->
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="apple-touch-icon" href="/assets/icone-180.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+<div id="root"></div>
+
+<!-- Sans JavaScript, la page resterait blanche : au moins dire de quoi il
+     s'agit, et à qui écrire. Un visiteur derrière un réseau qui filtre les
+     scripts n'est pas un visiteur perdu. -->
+<noscript>
+  <div style="max-width:640px;margin:0 auto;padding:48px 24px;font-family:system-ui,sans-serif;line-height:1.6;color:#12211B">
+    <h1 style="font-size:26px;line-height:1.2">Recensement des agences de voyage et de tourisme du Bénin</h1>
+    <p>
+      Le Ministère du Tourisme et du Commerce Extérieur recense les agences de voyage et de tourisme
+      exerçant au Bénin : demandes de licence des nouvelles agences.
+    </p>
+    <p>
+      <strong>Le formulaire nécessite JavaScript.</strong> Activez-le dans votre navigateur, ou écrivez à
+      <a href="mailto:contact@benintourisme.bj">contact@benintourisme.bj</a>.
+    </p>
+  </div>
+</noscript>
+
+<script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
