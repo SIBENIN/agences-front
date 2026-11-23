@@ -4,8 +4,9 @@
 
 .form-layout {
   display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 44px;
+  grid-template-columns: 310px minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
 }
 
 @media (max-width: 900px) {
@@ -21,6 +22,7 @@
   max-width: 640px;
   margin: 40px auto;
   padding: 40px 36px;
+  border-top: 4px solid var(--color-primary);
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -41,103 +43,153 @@
   max-width: 460px;
 }
 
-/* --- Sidebar ------------------------------------------------------------ */
+/* --- Colonne latérale : carte bleu nuit, frise verticale des étapes -------- */
 
 .form-aside {
+  align-self: start;
+  position: sticky;
+  top: calc(var(--header-height) + 20px);
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: 24px;
+  padding: 28px 22px 22px;
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(420px circle at 100% 0%, rgba(59, 184, 245, 0.22), transparent 60%),
+    linear-gradient(170deg, var(--color-navy-2) 0%, var(--color-navy) 100%);
+  color: #C9D6EE;
+  box-shadow: var(--shadow-float);
 }
 
-.form-aside__intro h1 {
+.form-aside .eyebrow {
+  color: #7CCBF7;
+}
+
+.form-aside__intro h1,
+.form-aside__intro h2 {
   font-family: var(--font-heading);
-  font-size: 30px;
-  line-height: 1.1;
-  letter-spacing: -0.9px;
-  margin: 10px 0 12px;
+  font-size: 21px;
+  line-height: 1.25;
+  letter-spacing: -0.3px;
+  margin: 10px 0 10px;
   font-weight: 700;
+  color: #FFFFFF;
 }
 
 .form-aside__intro p {
-  font-size: 14px;
+  font-size: 13.5px;
   line-height: 1.6;
-  color: var(--color-muted);
+  color: #A9BADA;
 }
 
 .progress-track {
   height: 6px;
   border-radius: var(--radius-pill);
-  background: var(--color-border);
+  background: rgba(255, 255, 255, 0.12);
   overflow: hidden;
 }
 
 .progress-track__fill {
   height: 100%;
-  background: var(--color-green);
+  background: linear-gradient(90deg, var(--color-sky), #7CCBF7);
   border-radius: var(--radius-pill);
   width: 0%;
-  transition: width .2s ease;
+  transition: width .25s ease;
 }
 
 .step-list {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+}
+
+/* Le fil qui relie les pastilles. */
+.step-list::before {
+  content: '';
+  position: absolute;
+  top: 22px;
+  bottom: 22px;
+  left: 23px;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .step-list__item {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 12px;
+  gap: 14px;
+  padding: 10px 12px;
   border-radius: var(--radius-md);
   border: none;
   background: transparent;
   text-align: left;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 500;
-  color: var(--color-muted);
+  color: #A9BADA;
   cursor: pointer;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.step-list__item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #FFFFFF;
+}
+
+.step-list__item:focus-visible {
+  outline: 2px solid var(--color-sky);
+  outline-offset: 0;
 }
 
 .step-list__item.is-active {
-  background: var(--color-surface);
-  color: var(--color-green);
+  background: rgba(255, 255, 255, 0.10);
+  color: #FFFFFF;
   font-weight: 700;
-  box-shadow: 0 1px 2px rgba(6, 53, 39, 0.06);
 }
 
 .step-list__item.is-locked {
   cursor: not-allowed;
-  opacity: 0.55;
+  opacity: 0.5;
+}
+
+.step-list__item.is-locked:hover {
+  background: transparent;
+  color: #A9BADA;
 }
 
 .step-list__dot {
+  position: relative;
+  z-index: 1;
   width: 24px;
   height: 24px;
   flex-shrink: 0;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
-  background: #EAE4D6;
-  color: var(--color-muted-3);
+  background: var(--color-navy);
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  color: #A9BADA;
 }
 
 .step-list__item.is-active .step-list__dot {
-  background: var(--color-green);
-  color: #FFFFFF;
+  background: var(--color-sky);
+  border-color: var(--color-sky);
+  color: var(--color-navy);
+  box-shadow: 0 0 0 4px rgba(59, 184, 245, 0.25);
 }
 
 .step-list__item.is-done .step-list__dot {
-  background: var(--color-green-soft);
-  color: var(--color-green);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #FFFFFF;
 }
 
 .form-aside__docs {
-  border-top: 1px solid var(--color-border);
-  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 18px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -148,24 +200,35 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-muted-3);
+  color: #7CCBF7;
 }
 
 .form-aside__docs-list {
   font-size: 13px;
   line-height: 1.7;
-  color: var(--color-muted);
+  color: #C9D6EE;
 }
 
-/* --- Step panel ----------------------------------------------------------- */
+@media (max-width: 900px), (max-height: 760px) {
+  .form-aside {
+    position: static;
+  }
+}
+
+/* --- Panneau de l'étape ------------------------------------------------------ */
 
 .form-panel {
+  position: relative;
   min-width: 0;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 18px;
-  padding: 38px 40px 32px;
+  border-radius: var(--radius-xl);
+  padding: 34px 40px 32px;
   box-shadow: var(--shadow-card);
+  /* Liseré bleu en tête du panneau. Une bordure plutôt qu'un pseudo-élément
+     rogné : rogner le panneau couperait les listes déroulantes et les
+     infobulles qui en débordent. */
+  border-top: 4px solid var(--color-primary);
   display: flex;
   flex-direction: column;
 }
@@ -173,24 +236,31 @@
 .form-panel__header {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: 10px 14px;
   padding-bottom: 22px;
   border-bottom: 1px solid var(--color-border-soft);
 }
 
 .form-panel__step-num {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-soft);
   font-family: var(--font-heading);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
-  color: #A8B3AB;
+  color: var(--color-primary);
 }
 
 .form-panel__title {
   font-family: var(--font-heading);
-  font-size: 24px;
-  letter-spacing: -0.5px;
+  font-size: 23px;
+  letter-spacing: -0.4px;
   font-weight: 700;
+  color: var(--color-text);
 }
 
 .form-panel__goal {
@@ -295,7 +365,7 @@
 /* Fond blanc plutôt que vert : les champs verrouillés sont déjà grisés
    (.form-field input:disabled), ils resteraient illisibles sur un aplat. */
 .rnpp-card--verified {
-  border-color: var(--color-green);
+  border-color: var(--color-primary);
   background: var(--color-surface);
 }
 
@@ -315,7 +385,7 @@
 }
 
 .rnpp-card--verified .rnpp-card__legend {
-  color: var(--color-green);
+  color: var(--color-primary);
 }
 
 .rnpp-card__badge {
@@ -326,8 +396,8 @@
   padding: 3px 8px;
   border-radius: var(--radius-pill);
   background: var(--color-surface);
-  border: 1px solid var(--color-green-soft);
-  color: var(--color-green);
+  border: 1px solid var(--color-primary-soft);
+  color: var(--color-primary);
 }
 
 @media (max-width: 560px) {
@@ -350,6 +420,13 @@
 
 .field-group--narrow {
   max-width: 340px;
+}
+
+/* Question « le représentant est-il le gérant ? », détachée du bloc email. */
+.gerant-choix {
+  margin-top: 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border-soft);
 }
 
 .field-group__label {
@@ -416,7 +493,7 @@
 .choice-card input[type="radio"],
 .choice-card input[type="checkbox"] {
   width: auto;
-  accent-color: var(--color-green);
+  accent-color: var(--color-primary);
   width: 17px;
   height: 17px;
   flex-shrink: 0;
@@ -450,7 +527,7 @@
 }
 
 .seg__option:hover {
-  color: var(--color-green);
+  color: var(--color-primary);
 }
 
 .seg__option input {
@@ -460,13 +537,13 @@
 }
 
 .seg__option:has(input:checked) {
-  background: var(--color-green);
+  background: var(--color-primary);
   color: #FFFFFF;
-  box-shadow: 0 1px 2px rgba(6, 53, 39, 0.25);
+  box-shadow: 0 1px 2px rgba(11, 31, 64, 0.25);
 }
 
 .seg__option:focus-within {
-  outline: 2px solid var(--color-green);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -494,7 +571,7 @@
 .momo__title {
   font-size: 13px;
   font-weight: 700;
-  color: var(--color-green);
+  color: var(--color-primary);
 }
 
 .momo select {
@@ -546,13 +623,13 @@
 }
 
 .chip:has(.chip-checkbox:checked) {
-  border-color: var(--color-green);
-  background: var(--color-green);
+  border-color: var(--color-primary);
+  background: var(--color-primary);
   color: #FFFFFF;
 }
 
 .chip:focus-within {
-  outline: 2px solid var(--color-green);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -576,8 +653,8 @@
 }
 
 .ms__control:focus-within {
-  border-color: var(--color-green);
-  outline: 2px solid var(--color-green);
+  border-color: var(--color-primary);
+  outline: 2px solid var(--color-primary);
   outline-offset: 1px;
 }
 
@@ -595,7 +672,7 @@
   gap: 6px;
   padding: 5px 6px 5px 12px;
   border-radius: var(--radius-pill);
-  background: var(--color-green);
+  background: var(--color-primary);
   color: #FFFFFF;
   font-size: 12.5px;
   font-weight: 600;
@@ -706,8 +783,8 @@
 }
 
 .ms__option.is-selected {
-  background: var(--color-green-soft);
-  color: var(--color-green);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -738,7 +815,7 @@
 }
 
 .upload-box {
-  border: 1px dashed #C9C0AC;
+  border: 1px dashed #B8C6DB;
   border-radius: 12px;
   background: var(--color-surface-soft);
   padding: 18px;
@@ -764,23 +841,23 @@
   align-self: flex-start;
   padding: 8px 14px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--color-green);
+  border: 1px solid var(--color-primary);
   background: transparent;
-  color: var(--color-green);
+  color: var(--color-primary);
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .upload-btn:hover {
-  background: var(--color-green);
+  background: var(--color-primary);
   color: #FFFFFF;
 }
 
 .upload-btn--solid {
   align-self: flex-start;
   border: none;
-  background: var(--color-green);
+  background: var(--color-primary);
   color: #FFFFFF;
   padding: 11px 18px;
   border-radius: 9px;
@@ -788,7 +865,7 @@
 }
 
 .upload-btn--solid:hover {
-  background: var(--color-green-dark);
+  background: var(--color-primary-dark);
 }
 
 .upload-btn input[type="file"] {
@@ -852,8 +929,8 @@
 /* --- NPI / RNPP lookup (X-Road simulation) --------------------------------- */
 
 .npi-lookup {
-  border: 1px solid var(--color-green-soft);
-  background: var(--color-green-soft);
+  border: 1px solid var(--color-primary-soft);
+  background: var(--color-primary-soft);
   border-radius: 14px;
   padding: 20px 22px;
   display: flex;
@@ -870,7 +947,7 @@
 .npi-lookup__title {
   font-size: 14px;
   font-weight: 700;
-  color: var(--color-green);
+  color: var(--color-primary);
 }
 
 .npi-lookup__badge {
@@ -937,7 +1014,7 @@
   font-size: 12.5px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--color-green);
+  color: var(--color-primary);
 }
 
 .npi-lookup__spinner {
@@ -968,7 +1045,7 @@
   padding: 0;
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--color-green);
+  color: var(--color-primary);
   cursor: pointer;
   text-decoration: underline;
 }
@@ -993,8 +1070,8 @@
 }
 
 .npi-lookup__status--success {
-  background: #E6F2EC;
-  color: var(--color-green);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
 }
 
 .npi-lookup__status--error {
@@ -1041,8 +1118,8 @@
 
 .dropzone:hover,
 .dropzone.is-over {
-  border-color: var(--color-green);
-  background: var(--color-green-soft);
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
 }
 
 .dropzone.is-invalid {
@@ -1059,7 +1136,7 @@
 .dropzone__icon {
   font-size: 22px;
   line-height: 1;
-  color: var(--color-green);
+  color: var(--color-primary);
 }
 
 .dropzone__text {
@@ -1068,7 +1145,7 @@
 }
 
 .dropzone__text strong {
-  color: var(--color-green);
+  color: var(--color-primary);
   text-decoration: underline;
 }
 
@@ -1101,7 +1178,7 @@
   flex: 1;
   min-width: 0;
   overflow-wrap: anywhere;
-  color: var(--color-green);
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -1169,7 +1246,7 @@
   border-radius: 12px;
   font-size: 14.5px;
   line-height: 1.5;
-  color: #23342C;
+  color: var(--color-text);
   cursor: pointer;
 }
 
@@ -1179,7 +1256,7 @@
 
 .engagement-item input {
   width: auto;
-  accent-color: var(--color-green);
+  accent-color: var(--color-primary);
   width: 18px;
   height: 18px;
   margin-top: 1px;
@@ -1201,8 +1278,8 @@
   width: 62px;
   height: 62px;
   border-radius: 50%;
-  background: var(--color-green-soft);
-  color: var(--color-green);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
   display: grid;
   place-items: center;
   font-size: 28px;
@@ -1380,7 +1457,11 @@
 
 @media (max-width: 480px) {
   .form-layout {
-    gap: 28px;
+    gap: 20px;
+  }
+
+  .form-aside {
+    padding: 22px 14px 16px;
   }
 
   .form-panel {
@@ -1460,9 +1541,9 @@
 }
 
 .choice-card--boxed.is-checked {
-  border-color: var(--color-green);
-  background: var(--color-green-soft);
-  color: var(--color-green-dark);
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
   font-weight: 600;
 }
 
@@ -1525,9 +1606,9 @@
   margin: -6px 0 4px;
   padding: 12px 16px;
   border-radius: 10px;
-  background: var(--color-green-soft);
+  background: var(--color-primary-soft);
 }
 
 .frais { margin-top: 14px; }
 .frais__total { padding-top: 8px; border-top: 1px solid var(--color-border-input); font-weight: 700; }
-.frais__total dd { color: var(--color-green-dark); }
+.frais__total dd { color: var(--color-primary-dark); }

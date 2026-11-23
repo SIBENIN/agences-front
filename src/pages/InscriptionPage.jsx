@@ -26,7 +26,7 @@ import 'react-phone-number-input/style.css';
 const DRAFT_KEY = 'bj_av_public_draft';
 
 const STEP_INFO = [
-  'Représentant légal',
+  'Représentant légal et gérant',
   "Informations sur l'agence",
   "Implantation de l'agence",
   'Pièces et casier judiciaire',
@@ -42,11 +42,21 @@ const STEP_COUNT = STEP_INFO.length;
 const CONSENTEMENT_APDP =
   "J'autorise le partage des données de ce dossier avec les administrations concernées pour les besoins du recensement, conformément à la réglementation sur la protection des données à caractère personnel (APDP).";
 
+/** Identité du gérant quand ce n'est pas le représentant légal (RNPP). */
+const GERANT_VIDE = {
+  gerantNpi: '', gerantNom: '', gerantPrenom: '', gerantNaissance: '', gerantSexe: '', gerantNationalite: '',
+  gerantTel: '', gerantAdresse: '', gerantEmail: '', gerantPhoto: '', gerantNpiVerification: ''
+};
+
 function emptyData(nbEngagements = 2) {
   return {
     // Représentant légal (RNPP)
     npi: '', nom: '', prenom: '', naissance: '', sexe: '', nationalite: '', tel: '', adresse: '', email: '',
     photoRnpp: '', npiVerification: '',
+    // Gérant : '' (pas encore répondu) | 'oui' (le représentant légal) |
+    // 'non' (une autre personne, identifiée à son tour au RNPP).
+    gerantEstRepresentant: '',
+    ...GERANT_VIDE,
     // Agence. `entrepriseApiex` : identifiant de l'entreprise retenue parmi
     // celles que l'APIEX rattache au NPI (vide : saisie manuelle).
     entrepriseApiex: '', saisieManuelle: false,
@@ -74,6 +84,8 @@ function champsRequisManquants(n, d, ctx) {
   if (n === 1) {
     if (!d.npiVerification) m.push('npi');
     exiger('email');
+    if (!d.gerantEstRepresentant) m.push('gerant');
+    if (d.gerantEstRepresentant === 'non' && !d.gerantNpiVerification) m.push('gerantNpi');
   } else if (n === 2) {
     if (ctx.apiex?.phase === 'loading') m.push('apiex');
     if (ctx.apiex?.phase === 'done' && ctx.apiex.entreprises.length > 1 && !d.entrepriseApiex && !d.saisieManuelle) {
@@ -105,6 +117,12 @@ function champsRequisManquants(n, d, ctx) {
 function validateStep(n, d) {
   const err = {};
   if (n === 1 && !vide(d.email) && !EMAIL_RE.test(String(d.email).trim())) err.email = 'Adresse email invalide';
+  if (n === 1 && d.gerantEstRepresentant === 'non') {
+    if (!vide(d.gerantEmail) && !EMAIL_RE.test(String(d.gerantEmail).trim())) err.gerantEmail = 'Adresse email invalide';
+    if (!vide(d.gerantNpi) && String(d.gerantNpi).trim() === String(d.npi).trim()) {
+      err.gerantNpi = 'Ce NPI est celui du représentant légal : répondez « Oui » à la question précédente.';
+    }
+  }
   // Numéro au format international (+229…), contrôlé selon le plan de
   // numérotation du pays choisi.
   if (n === 2 && !vide(d.telAgence) && !isValidPhoneNumber(String(d.telAgence))) err.telAgence = 'Numéro de téléphone invalide pour ce pays';
@@ -162,6 +180,12 @@ export default function InscriptionPage() {
   const [npiStatus, setNpiStatus] = useState(null);
   const [npiSession, setNpiSession] = useState(null);
   const [otpValue, setOtpValue] = useState('');
+  // NPI du gérant, quand ce n'est pas le représentant légal : même parcours
+  // (code envoyé au téléphone du gérant inscrit au RNPP).
+  const [gerantPhase, setGerantPhase] = useState('idle'); // idle | loading | otp | verifying | verified
+  const [gerantStatus, setGerantStatus] = useState(null);
+  const [gerantSession, setGerantSession] = useState(null);
+  const [gerantOtp, setGerantOtp] = useState('');
   // IFU / DGI : dernier IFU réellement soumis à la DGI.
   const [ifuStatus, setIfuStatus] = useState(null);
   const [ifuLoading, setIfuLoading] = useState(false);
@@ -219,6 +243,10 @@ export default function InscriptionPage() {
           setNpiPhase('verified');
           setNpiStatus({ kind: 'success', text: '✓ Identité confirmée et retrouvée au RNPP (ANIP).' });
         }
+        if (merged.gerantEstRepresentant === 'non' && merged.gerantNpiVerification) {
+          setGerantPhase('verified');
+          setGerantStatus({ kind: 'success', text: '✓ Identité du gérant confirmée et retrouvée au RNPP (ANIP).' });
+        }
       }
     } catch (err) {
       // brouillon illisible -> on repart de zéro
@@ -229,7 +257,7 @@ export default function InscriptionPage() {
 
   useEffect(() => {
     if (!restored.current || created) return;
-    const { uploads, photoRnpp, ...sansFichiers } = data;
+    const { uploads, photoRnpp, gerantPhoto, ...sansFichiers } = data;
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify({
         step, maxStepReached, data: sansFichiers, ifuVerifie, npiVerified: npiPhase === 'verified',
@@ -272,6 +300,10 @@ export default function InscriptionPage() {
     setNpiSession(null);
     setOtpValue('');
     setNpiStatus(null);
+    setGerantPhase('idle');
+    setGerantSession(null);
+    setGerantOtp('');
+    setGerantStatus(null);
     setIfuStatus(null);
     setIfuVerifie('');
     setGpsStatus(null);
@@ -389,6 +421,105 @@ export default function InscriptionPage() {
     setPaiementStatus(null);
     setTransactionEnCours(null);
     patch({ nom: '', prenom: '', naissance: '', sexe: '', nationalite: '', tel: '', adresse: '' });
+  }
+
+  // --- Gérant ---------------------------------------------------------------
+
+  const gerantLocked = gerantPhase === 'verified';
+
+  function messageOtpGerant(session) {
+    const base = `Un code à 6 chiffres vient d'être envoyé au ${session.telephoneMasque}, numéro du gérant au RNPP. Demandez-le au gérant pour confirmer son identité.`;
+    return session.otpDemo ? `${base} Code de démonstration : ${session.otpDemo}.` : base;
+  }
+
+  /** « Le représentant légal est-il aussi le gérant ? » */
+  function choisirGerant(valeur) {
+    if (valeur === data.gerantEstRepresentant) return;
+    if (valeur === 'oui') annulerVerificationGerant({ effacerNpi: true });
+    patch({ gerantEstRepresentant: valeur });
+    setErrors((e) => ({ ...e, gerantNpi: undefined, gerantEmail: undefined }));
+  }
+
+  async function gerantLookup() {
+    const npi = data.gerantNpi.trim();
+    if (!/^\d{10}$/.test(npi)) {
+      setGerantStatus({ kind: 'error', text: 'Le NPI du gérant doit comporter exactement 10 chiffres.' });
+      return;
+    }
+    if (npi === data.npi.trim()) {
+      setGerantStatus({ kind: 'error', text: 'Ce NPI est celui du représentant légal : répondez « Oui » à la question précédente.' });
+      return;
+    }
+    setGerantPhase('loading');
+    setGerantStatus({ kind: 'loading', text: 'Interrogation du RNPP (ANIP)…' });
+    try {
+      const session = await api.npiLookup(npi, await jetonRecaptcha(recaptchaSiteKey, 'npi_lookup'));
+      setGerantSession(session);
+      setGerantOtp('');
+      setGerantPhase('otp');
+      setGerantStatus({ kind: 'info', hint: messageOtpGerant(session), text: '' });
+    } catch (err) {
+      setGerantPhase('idle');
+      setGerantStatus({ kind: 'error', text: err.message });
+    }
+  }
+
+  async function gerantResendOtp() {
+    if (!gerantSession) return;
+    setGerantStatus({ kind: 'loading', text: 'Envoi d’un nouveau code…' });
+    try {
+      const session = await api.npiResend(gerantSession.requestId);
+      const suivante = { ...gerantSession, ...session };
+      setGerantSession(suivante);
+      setGerantOtp('');
+      setGerantStatus({ kind: 'info', hint: messageOtpGerant(suivante), text: '' });
+    } catch (err) {
+      if (err.status === 410) annulerVerificationGerant();
+      setGerantStatus({ kind: 'error', text: err.message });
+    }
+  }
+
+  async function gerantVerifyOtp() {
+    if (!gerantSession) return;
+    setGerantPhase('verifying');
+    setGerantStatus({ kind: 'loading', text: 'Vérification du code…' });
+    try {
+      const { identite, photo, verificationToken } = await api.npiConfirm(gerantSession.requestId, gerantOtp.trim());
+      patch({
+        gerantNom: identite.nom,
+        gerantPrenom: identite.prenom,
+        gerantNaissance: identite.naissance,
+        gerantSexe: identite.sexe,
+        gerantNationalite: identite.nationalite || '',
+        gerantTel: identite.tel,
+        gerantAdresse: identite.adresse,
+        gerantPhoto: photo || '',
+        gerantNpiVerification: verificationToken
+      });
+      setGerantPhase('verified');
+      setGerantSession(null);
+      setGerantOtp('');
+      setGerantStatus({ kind: 'success', text: '✓ Identité du gérant confirmée et retrouvée au RNPP (ANIP).' });
+    } catch (err) {
+      if (err.status === 410 || err.status === 429) {
+        annulerVerificationGerant();
+        setGerantStatus({ kind: 'error', text: err.message });
+        return;
+      }
+      setGerantPhase('otp');
+      setGerantStatus({ kind: 'error', hint: gerantSession ? messageOtpGerant(gerantSession) : '', text: err.message });
+    }
+  }
+
+  /** Repart de zéro pour le gérant ; `effacerNpi` vide aussi le NPI saisi. */
+  function annulerVerificationGerant({ effacerNpi = false } = {}) {
+    setGerantPhase('idle');
+    setGerantSession(null);
+    setGerantOtp('');
+    setGerantStatus(null);
+    // eslint-disable-next-line no-unused-vars
+    const { gerantNpi, gerantEmail, ...identite } = GERANT_VIDE;
+    patch(effacerNpi ? GERANT_VIDE : identite);
   }
 
   // --- APIEX : entreprises rattachées au NPI ---------------------------------
@@ -784,6 +915,13 @@ export default function InscriptionPage() {
         email: data.email.trim(),
         adresse: data.adresse,
         npiVerification: data.npiVerification || null,
+        // Gérant : son état civil est relu par l'API dans sa copie RNPP.
+        gerantEstRepresentant: data.gerantEstRepresentant === 'oui',
+        ...(data.gerantEstRepresentant === 'non' ? {
+          gerantNpi: data.gerantNpi.trim(),
+          gerantNpiVerification: data.gerantNpiVerification || null,
+          gerantEmail: data.gerantEmail.trim()
+        } : {}),
         // Agence
         // Identifiant seulement : l'API reprend raison sociale, RCCM et IFU
         // de sa propre copie de la réponse APIEX.
@@ -839,6 +977,11 @@ export default function InscriptionPage() {
       window.scrollTo({ top: document.getElementById('form-start')?.offsetTop || 0, behavior: 'smooth' });
     } catch (err) {
       if (err.errors?.paiement) setPaiement(null);
+      // Vérification du gérant expirée : elle est à refaire à l'étape 1.
+      if (err.errors?.gerantNpi) {
+        annulerVerificationGerant();
+        setStep(1);
+      }
       setSubmitError(err.message || "Échec de l'envoi du dossier. Réessayez dans quelques instants.");
     } finally {
       setSubmitting(false);
@@ -915,7 +1058,8 @@ export default function InscriptionPage() {
                 <p className="step-intro">
                   Le représentant légal (ou promoteur) est la personne physique qui représente
                   l'agence. Son identité est récupérée au Registre National des Personnes Physiques
-                  à partir de son NPI, après confirmation par un code reçu par SMS.
+                  à partir de son NPI, après confirmation par un code reçu par SMS. Vous
+                  indiquerez ensuite qui est le gérant de l'agence, s'il s'agit d'une autre personne.
                 </p>
                 <div className="npi-lookup">
                   <div className="npi-lookup__header">
@@ -1017,6 +1161,134 @@ export default function InscriptionPage() {
                   Les notifications relatives au dossier (accusé de réception, demandes de
                   complément, décision) sont envoyées à cette adresse.
                 </span>
+
+                {/* Gérant : pas forcément le représentant légal. */}
+                <div className="field-group gerant-choix">
+                  <span className="field-group__label">
+                    Le représentant légal est-il aussi le gérant de l'agence ?{' '}
+                    <span className="form-field__required" aria-hidden="true">*</span>
+                  </span>
+                  <Choix
+                    name="gerantEstRepresentant"
+                    options={[
+                      { value: 'oui', label: "Oui, il gère lui-même l'agence" },
+                      { value: 'non', label: 'Non, le gérant est une autre personne' }
+                    ]}
+                    value={data.gerantEstRepresentant}
+                    onChange={choisirGerant}
+                  />
+                  <span className="field-hint">
+                    Le gérant dirige l'activité de l'agence au quotidien. Sa pièce d'identité, son
+                    curriculum vitae, ses attestations d'expérience et son casier judiciaire sont
+                    demandés au dossier.
+                  </span>
+                </div>
+
+                {data.gerantEstRepresentant === 'non' && (
+                  <>
+                    <div className="npi-lookup">
+                      <div className="npi-lookup__header">
+                        <span className="npi-lookup__title">Identification du gérant via le RNPP (ANIP)</span>
+                      </div>
+                      <p className="npi-lookup__hint">
+                        Un code de confirmation est envoyé par SMS au numéro du gérant inscrit au RNPP :
+                        le gérant doit être joignable pour vous le communiquer.
+                      </p>
+                      {gerantPhase !== 'otp' && gerantPhase !== 'verifying' && (
+                        <div className="npi-lookup__row">
+                          <input
+                            inputMode="numeric"
+                            maxLength={10}
+                            placeholder="NPI du gérant — ex. 0123456789"
+                            autoComplete="off"
+                            aria-label="NPI du gérant"
+                            aria-invalid={errors.gerantNpi ? 'true' : undefined}
+                            value={data.gerantNpi}
+                            disabled={gerantLocked || gerantPhase === 'loading'}
+                            onChange={(e) => patch({ gerantNpi: e.target.value })}
+                          />
+                          <button type="button" className="btn btn-primary" disabled={gerantLocked || gerantPhase === 'loading'} onClick={gerantLookup}>
+                            Vérifier le NPI
+                          </button>
+                        </div>
+                      )}
+                      {(gerantPhase === 'otp' || gerantPhase === 'verifying') && (
+                        <div className="npi-lookup__otp">
+                          <p className="npi-lookup__otp-npi">NPI du gérant : {data.gerantNpi}</p>
+                          <p className="npi-lookup__hint">{gerantStatus?.hint}</p>
+                          <div className="npi-lookup__row">
+                            <input
+                              inputMode="numeric"
+                              maxLength={6}
+                              placeholder="Code de vérification"
+                              autoComplete="one-time-code"
+                              aria-label="Code de vérification du gérant"
+                              value={gerantOtp}
+                              disabled={gerantPhase === 'verifying'}
+                              onChange={(e) => setGerantOtp(e.target.value)}
+                            />
+                            <button type="button" className="btn btn-primary" disabled={gerantPhase === 'verifying'} onClick={gerantVerifyOtp}>
+                              Valider le code
+                            </button>
+                          </div>
+                          <div className="npi-lookup__otp-actions">
+                            <button type="button" className="npi-lookup__link" onClick={gerantResendOtp}>Renvoyer le code</button>
+                            <button type="button" className="npi-lookup__link" onClick={() => annulerVerificationGerant()}>Modifier le NPI</button>
+                          </div>
+                        </div>
+                      )}
+                      {gerantStatus && gerantStatus.kind && <Status status={gerantStatus} />}
+                      {errors.gerantNpi && <Status status={{ kind: 'error', text: errors.gerantNpi }} />}
+                      {gerantLocked && (
+                        <div className="npi-lookup__otp-actions">
+                          <button type="button" className="npi-lookup__link" onClick={() => annulerVerificationGerant()}>Modifier le NPI</button>
+                        </div>
+                      )}
+                      {manque('gerantNpi') && gerantPhase === 'idle' && !gerantStatus && (
+                        <span className="field-hint">Vérifiez le NPI du gérant pour continuer.</span>
+                      )}
+                    </div>
+
+                    <fieldset className={'rnpp-card' + (gerantLocked ? ' rnpp-card--verified' : '')}>
+                      <legend className="rnpp-card__legend">
+                        Informations sur le gérant
+                        {gerantLocked && <span className="rnpp-card__badge">Vérifié</span>}
+                      </legend>
+                      <div className="form-grid">
+                        <Field label="Nom"><span className="form-field__readonly">{data.gerantNom}</span></Field>
+                        <Field label="Prénom(s)"><span className="form-field__readonly">{data.gerantPrenom}</span></Field>
+                        <Field label="Date de naissance"><input type="date" value={data.gerantNaissance} disabled /></Field>
+                        <Field label="Sexe"><input value={data.gerantSexe} disabled /></Field>
+                        <div className="rnpp-final span-2">
+                          <Field label="Nationalité"><input value={data.gerantNationalite} disabled /></Field>
+                          <Field label="Téléphone"><input type="tel" value={data.gerantTel} disabled /></Field>
+                          <Field label="Adresse de résidence" className="rnpp-final__adresse">
+                            <span className="form-field__readonly">{data.gerantAdresse}</span>
+                          </Field>
+                          <figure className="rnpp-final__photo">
+                            {gerantLocked && data.gerantPhoto ? (
+                              <img src={data.gerantPhoto} alt={`Photo d'identité transmise par le RNPP pour ${data.gerantPrenom} ${data.gerantNom}`} />
+                            ) : (
+                              <figcaption className="rnpp-final__photo-vide">Photo d’identité</figcaption>
+                            )}
+                          </figure>
+                        </div>
+                      </div>
+                    </fieldset>
+
+                    <div className="form-grid">
+                      <Field label="Adresse email du gérant" error={errors.gerantEmail}>
+                        <input
+                          type="email"
+                          aria-invalid={errors.gerantEmail ? 'true' : undefined}
+                          placeholder="nom@exemple.bj"
+                          value={data.gerantEmail}
+                          onChange={(e) => patch({ gerantEmail: e.target.value })}
+                        />
+                      </Field>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -1319,6 +1591,10 @@ export default function InscriptionPage() {
                       Documents à joindre
                       {data.regime === 'A' ? ' — les statuts ne sont pas demandés au régime A' : ''}.
                       Formats PDF, JPG, PNG ou WEBP, 5 Mo maximum par fichier.
+                      {' '}Les pièces « du gérant » concernent{' '}
+                      {data.gerantEstRepresentant === 'non'
+                        ? <strong>{data.gerantPrenom} {data.gerantNom}</strong>
+                        : 'le représentant légal, qui est aussi le gérant'}.
                     </p>
                     {pieces.map((cle) => {
                       const multiple = PIECES_MULTIPLES.includes(cle);
@@ -1396,6 +1672,14 @@ export default function InscriptionPage() {
                   <h3 className="recap__title">Récapitulatif</h3>
                   <dl className="recap__list">
                     <div><dt>Représentant légal</dt><dd>{data.prenom} {data.nom} · {data.email}</dd></div>
+                    <div>
+                      <dt>Gérant</dt>
+                      <dd>
+                        {data.gerantEstRepresentant === 'non'
+                          ? `${data.gerantPrenom} ${data.gerantNom} (NPI ${data.gerantNpi})`
+                          : 'Le représentant légal'}
+                      </dd>
+                    </div>
                     <div><dt>Agence</dt><dd>{data.nomCommercial} — {data.raisonSociale} ({data.rccm})</dd></div>
                     <div><dt>Catégorie · régime</dt><dd>{libelle(categories, data.categorie)} · {data.regime === 'autre' ? data.regimeAutre : libelle(regimes, data.regime)}</dd></div>
                     <div>

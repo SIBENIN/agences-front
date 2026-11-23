@@ -37,9 +37,9 @@
 }
 
 .infos__retour:hover {
-  border-color: var(--color-green);
-  background: var(--color-green-soft);
-  color: var(--color-green);
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
   text-decoration: none;
 }
 

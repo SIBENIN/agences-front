@@ -5,6 +5,7 @@ import BandeauCookies from './components/BandeauCookies.jsx';
 import { demarrerMesureAudience } from './lib/mesureAudience.js';
 
 import './styles/base.css';
+import './styles/layout.css';
 import './styles/home.css';
 import './styles/form.css';
 import './styles/rnpp-photo.css';

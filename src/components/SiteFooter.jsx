@@ -35,6 +35,19 @@ const RESEAUX = [
 export default function SiteFooter({ suivi = true }) {
   return (
     <footer className="site-footer">
+      <div className="site-footer__aide">
+        <div className="site-footer__aide-inner">
+          <div>
+            <p className="site-footer__aide-titre">Une question sur votre demande ?</p>
+            <p className="site-footer__aide-texte">Consultez les réponses aux questions fréquentes ou écrivez-nous.</p>
+          </div>
+          <div className="site-footer__aide-actions">
+            <a className="site-footer__aide-btn" href="?page=faq">Questions fréquentes</a>
+            <a className="site-footer__aide-btn site-footer__aide-btn--plein" href={'mailto:' + INSTITUTION.email}>Nous écrire</a>
+          </div>
+        </div>
+      </div>
+
       <div className="site-footer__top">
         <div className="site-footer__brand">
           <div className="site-footer__logo">

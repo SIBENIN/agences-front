@@ -30,7 +30,7 @@
 }
 
 .bandeau-cookies__texte a {
-  color: var(--color-green);
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -95,9 +95,9 @@
   padding: 0;
   border: 0;
   background: none;
-  color: #CFE0D6;
+  color: #C8D6EC;
   font: inherit;
-  font-size: 13px;
+  font-size: 13.5px;
   text-align: left;
   cursor: pointer;
 }

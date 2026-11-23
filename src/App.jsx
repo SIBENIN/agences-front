@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from './api/client.js';
 import { ReferentielsProvider, useReferentiels } from './context/ReferentielsContext.jsx';
 import Hero from './components/Hero.jsx';
+import SiteHeader from './components/SiteHeader.jsx';
 import SiteFooter from './components/SiteFooter.jsx';
 import InscriptionPage from './pages/InscriptionPage.jsx';
 import SuiviPage from './pages/SuiviPage.jsx';
@@ -120,6 +121,12 @@ function PiedAccueil() {
   return <SiteFooter suivi={!(!ouvert && programme)} />;
 }
 
+/** En-tête de l'accueil : sans lien de suivi tant que le registre est programmé. */
+function EnteteAccueil() {
+  const { ouvert, programme } = useReferentiels();
+  return <SiteHeader suivi={!(!ouvert && programme)} />;
+}
+
 /**
  * Suivi d'un dossier, sauf quand le registre est programmé : aucun dossier
  * n'a pu être déposé avant l'ouverture, la page annonce donc la date au lieu
@@ -184,6 +191,7 @@ export default function App() {
     return (
       <>
         <LienEvitement />
+        <SiteHeader />
         <InfosPage page={pageInfo} />
         <SiteFooter />
       </>
@@ -197,6 +205,7 @@ export default function App() {
     return (
       <>
         <LienEvitement />
+        <SiteHeader />
         <SuiviOuAnnonce numeroInitial={numeroSuivi} />
         <SiteFooter />
       </>
@@ -206,6 +215,7 @@ export default function App() {
   return (
     <ReferentielsProvider>
       <LienEvitement />
+      <EnteteAccueil />
       <Hero />
       <Contenu />
       <PiedAccueil />
