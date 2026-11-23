@@ -1,15 +1,33 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 /**
  * En-tête du site, commun à toutes les pages : le logo du ministère, le nom du
  * dispositif, et les deux chemins d'un usager — déposer une demande ou suivre
- * un dossier. Collant en haut de l'écran.
+ * un dossier.
  *
  * `suivi` à faux retire le lien de suivi (registre pas encore ouvert).
+ *
+ * `superpose` (accueil) : l'en-tête flotte au-dessus de la photographie du
+ * bandeau, transparent, et ne prend son fond blanc qu'une fois la page
+ * défilée.
  */
-export default function SiteHeader({ suivi = true }) {
+export default function SiteHeader({ suivi = true, superpose = false }) {
+  const [defile, setDefile] = useState(false);
+
+  useEffect(() => {
+    if (!superpose) return undefined;
+    const surDefilement = () => setDefile(window.scrollY > 24);
+    surDefilement();
+    window.addEventListener('scroll', surDefilement, { passive: true });
+    return () => window.removeEventListener('scroll', surDefilement);
+  }, [superpose]);
+
+  const classes = 'site-header' +
+    (superpose ? ' site-header--superpose' : '') +
+    (superpose && !defile ? ' site-header--transparent' : '');
+
   return (
-    <header className="site-header">
+    <header className={classes}>
       <div className="site-header__flag" aria-hidden="true"><span></span><span></span><span></span></div>
       <div className="site-header__bar">
         <a className="site-header__brand" href="/" aria-label="Accueil — Recensement des agences de voyage">
@@ -19,10 +37,11 @@ export default function SiteHeader({ suivi = true }) {
             alt="Ministère du Tourisme et du Commerce Extérieur"
           />
           <span className="site-header__sep" aria-hidden="true"></span>
-          <span className="site-header__titles">
-            <span className="site-header__title">Agences de voyage</span>
-            <span className="site-header__subtitle">Licences &amp; recensement</span>
-          </span>
+          <img
+            className="site-header__logo site-header__logo--bt"
+            src="/assets/Logo BT.png"
+            alt="Agence béninoise pour le développement du tourisme"
+          />
         </a>
 
         <nav className="site-header__nav" aria-label="Navigation principale">

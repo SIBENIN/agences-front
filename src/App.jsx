@@ -124,7 +124,7 @@ function PiedAccueil() {
 /** En-tête de l'accueil : sans lien de suivi tant que le registre est programmé. */
 function EnteteAccueil() {
   const { ouvert, programme } = useReferentiels();
-  return <SiteHeader suivi={!(!ouvert && programme)} />;
+  return <SiteHeader suivi={!(!ouvert && programme)} superpose />;
 }
 
 /**

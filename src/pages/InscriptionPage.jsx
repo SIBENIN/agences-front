@@ -26,10 +26,10 @@ import 'react-phone-number-input/style.css';
 const DRAFT_KEY = 'bj_av_public_draft';
 
 const STEP_INFO = [
-  'Représentant légal et gérant',
+  'Représentant légal',
   "Informations sur l'agence",
   "Implantation de l'agence",
-  'Pièces et casier judiciaire',
+  'Pièces, casier et gérant',
   'Engagement et envoi'
 ];
 const STEP_COUNT = STEP_INFO.length;
@@ -84,8 +84,6 @@ function champsRequisManquants(n, d, ctx) {
   if (n === 1) {
     if (!d.npiVerification) m.push('npi');
     exiger('email');
-    if (!d.gerantEstRepresentant) m.push('gerant');
-    if (d.gerantEstRepresentant === 'non' && !d.gerantNpiVerification) m.push('gerantNpi');
   } else if (n === 2) {
     if (ctx.apiex?.phase === 'loading') m.push('apiex');
     if (ctx.apiex?.phase === 'done' && ctx.apiex.entreprises.length > 1 && !d.entrepriseApiex && !d.saisieManuelle) {
@@ -102,6 +100,9 @@ function champsRequisManquants(n, d, ctx) {
     if (d.typeStructure === 'en_ligne') exiger('siteWeb');
   } else if (n === 4) {
     if (ctx.casier?.phase !== 'done') m.push('casier');
+    // Gérant : demandé en fin d'étape 4, après les pièces.
+    if (!d.gerantEstRepresentant) m.push('gerant');
+    if (d.gerantEstRepresentant === 'non' && !d.gerantNpiVerification) m.push('gerantNpi');
     piecesRequises(d).forEach((cle) => {
       if (!(d.uploads[cle] || []).length) m.push('piece-' + cle);
     });
@@ -117,7 +118,7 @@ function champsRequisManquants(n, d, ctx) {
 function validateStep(n, d) {
   const err = {};
   if (n === 1 && !vide(d.email) && !EMAIL_RE.test(String(d.email).trim())) err.email = 'Adresse email invalide';
-  if (n === 1 && d.gerantEstRepresentant === 'non') {
+  if (n === 4 && d.gerantEstRepresentant === 'non') {
     if (!vide(d.gerantEmail) && !EMAIL_RE.test(String(d.gerantEmail).trim())) err.gerantEmail = 'Adresse email invalide';
     if (!vide(d.gerantNpi) && String(d.gerantNpi).trim() === String(d.npi).trim()) {
       err.gerantNpi = 'Ce NPI est celui du représentant légal : répondez « Oui » à la question précédente.';
@@ -1059,7 +1060,7 @@ export default function InscriptionPage() {
                   Le représentant légal (ou promoteur) est la personne physique qui représente
                   l'agence. Son identité est récupérée au Registre National des Personnes Physiques
                   à partir de son NPI, après confirmation par un code reçu par SMS. Vous
-                  indiquerez ensuite qui est le gérant de l'agence, s'il s'agit d'une autre personne.
+                  indiquerez à l'étape 4 qui est le gérant de l'agence, s'il s'agit d'une autre personne.
                 </p>
                 <div className="npi-lookup">
                   <div className="npi-lookup__header">
@@ -1118,33 +1119,6 @@ export default function InscriptionPage() {
                   )}
                 </div>
 
-                <fieldset className={'rnpp-card' + (npiLocked ? ' rnpp-card--verified' : '')}>
-                  <legend className="rnpp-card__legend">
-                    Informations sur le représentant légal
-                    {npiLocked && <span className="rnpp-card__badge">Vérifié</span>}
-                  </legend>
-                  <div className="form-grid">
-                    <Field label="Nom"><span className="form-field__readonly">{data.nom}</span></Field>
-                    <Field label="Prénom(s)"><span className="form-field__readonly">{data.prenom}</span></Field>
-                    <Field label="Date de naissance"><input type="date" value={data.naissance} disabled /></Field>
-                    <Field label="Sexe"><input value={data.sexe} disabled /></Field>
-                    <div className="rnpp-final span-2">
-                      <Field label="Nationalité"><input value={data.nationalite} disabled /></Field>
-                      <Field label="Téléphone"><input type="tel" value={data.tel} disabled /></Field>
-                      <Field label="Adresse de résidence" className="rnpp-final__adresse">
-                        <span className="form-field__readonly">{data.adresse}</span>
-                      </Field>
-                      <figure className="rnpp-final__photo">
-                        {npiLocked && data.photoRnpp ? (
-                          <img src={data.photoRnpp} alt={`Photo d'identité transmise par le RNPP pour ${data.prenom} ${data.nom}`} />
-                        ) : (
-                          <figcaption className="rnpp-final__photo-vide">Photo d’identité</figcaption>
-                        )}
-                      </figure>
-                    </div>
-                  </div>
-                </fieldset>
-
                 <div className="form-grid">
                   <Field label="Adresse email du représentant légal" required error={errors.email}>
                     <input
@@ -1161,134 +1135,6 @@ export default function InscriptionPage() {
                   Les notifications relatives au dossier (accusé de réception, demandes de
                   complément, décision) sont envoyées à cette adresse.
                 </span>
-
-                {/* Gérant : pas forcément le représentant légal. */}
-                <div className="field-group gerant-choix">
-                  <span className="field-group__label">
-                    Le représentant légal est-il aussi le gérant de l'agence ?{' '}
-                    <span className="form-field__required" aria-hidden="true">*</span>
-                  </span>
-                  <Choix
-                    name="gerantEstRepresentant"
-                    options={[
-                      { value: 'oui', label: "Oui, il gère lui-même l'agence" },
-                      { value: 'non', label: 'Non, le gérant est une autre personne' }
-                    ]}
-                    value={data.gerantEstRepresentant}
-                    onChange={choisirGerant}
-                  />
-                  <span className="field-hint">
-                    Le gérant dirige l'activité de l'agence au quotidien. Sa pièce d'identité, son
-                    curriculum vitae, ses attestations d'expérience et son casier judiciaire sont
-                    demandés au dossier.
-                  </span>
-                </div>
-
-                {data.gerantEstRepresentant === 'non' && (
-                  <>
-                    <div className="npi-lookup">
-                      <div className="npi-lookup__header">
-                        <span className="npi-lookup__title">Identification du gérant via le RNPP (ANIP)</span>
-                      </div>
-                      <p className="npi-lookup__hint">
-                        Un code de confirmation est envoyé par SMS au numéro du gérant inscrit au RNPP :
-                        le gérant doit être joignable pour vous le communiquer.
-                      </p>
-                      {gerantPhase !== 'otp' && gerantPhase !== 'verifying' && (
-                        <div className="npi-lookup__row">
-                          <input
-                            inputMode="numeric"
-                            maxLength={10}
-                            placeholder="NPI du gérant — ex. 0123456789"
-                            autoComplete="off"
-                            aria-label="NPI du gérant"
-                            aria-invalid={errors.gerantNpi ? 'true' : undefined}
-                            value={data.gerantNpi}
-                            disabled={gerantLocked || gerantPhase === 'loading'}
-                            onChange={(e) => patch({ gerantNpi: e.target.value })}
-                          />
-                          <button type="button" className="btn btn-primary" disabled={gerantLocked || gerantPhase === 'loading'} onClick={gerantLookup}>
-                            Vérifier le NPI
-                          </button>
-                        </div>
-                      )}
-                      {(gerantPhase === 'otp' || gerantPhase === 'verifying') && (
-                        <div className="npi-lookup__otp">
-                          <p className="npi-lookup__otp-npi">NPI du gérant : {data.gerantNpi}</p>
-                          <p className="npi-lookup__hint">{gerantStatus?.hint}</p>
-                          <div className="npi-lookup__row">
-                            <input
-                              inputMode="numeric"
-                              maxLength={6}
-                              placeholder="Code de vérification"
-                              autoComplete="one-time-code"
-                              aria-label="Code de vérification du gérant"
-                              value={gerantOtp}
-                              disabled={gerantPhase === 'verifying'}
-                              onChange={(e) => setGerantOtp(e.target.value)}
-                            />
-                            <button type="button" className="btn btn-primary" disabled={gerantPhase === 'verifying'} onClick={gerantVerifyOtp}>
-                              Valider le code
-                            </button>
-                          </div>
-                          <div className="npi-lookup__otp-actions">
-                            <button type="button" className="npi-lookup__link" onClick={gerantResendOtp}>Renvoyer le code</button>
-                            <button type="button" className="npi-lookup__link" onClick={() => annulerVerificationGerant()}>Modifier le NPI</button>
-                          </div>
-                        </div>
-                      )}
-                      {gerantStatus && gerantStatus.kind && <Status status={gerantStatus} />}
-                      {errors.gerantNpi && <Status status={{ kind: 'error', text: errors.gerantNpi }} />}
-                      {gerantLocked && (
-                        <div className="npi-lookup__otp-actions">
-                          <button type="button" className="npi-lookup__link" onClick={() => annulerVerificationGerant()}>Modifier le NPI</button>
-                        </div>
-                      )}
-                      {manque('gerantNpi') && gerantPhase === 'idle' && !gerantStatus && (
-                        <span className="field-hint">Vérifiez le NPI du gérant pour continuer.</span>
-                      )}
-                    </div>
-
-                    <fieldset className={'rnpp-card' + (gerantLocked ? ' rnpp-card--verified' : '')}>
-                      <legend className="rnpp-card__legend">
-                        Informations sur le gérant
-                        {gerantLocked && <span className="rnpp-card__badge">Vérifié</span>}
-                      </legend>
-                      <div className="form-grid">
-                        <Field label="Nom"><span className="form-field__readonly">{data.gerantNom}</span></Field>
-                        <Field label="Prénom(s)"><span className="form-field__readonly">{data.gerantPrenom}</span></Field>
-                        <Field label="Date de naissance"><input type="date" value={data.gerantNaissance} disabled /></Field>
-                        <Field label="Sexe"><input value={data.gerantSexe} disabled /></Field>
-                        <div className="rnpp-final span-2">
-                          <Field label="Nationalité"><input value={data.gerantNationalite} disabled /></Field>
-                          <Field label="Téléphone"><input type="tel" value={data.gerantTel} disabled /></Field>
-                          <Field label="Adresse de résidence" className="rnpp-final__adresse">
-                            <span className="form-field__readonly">{data.gerantAdresse}</span>
-                          </Field>
-                          <figure className="rnpp-final__photo">
-                            {gerantLocked && data.gerantPhoto ? (
-                              <img src={data.gerantPhoto} alt={`Photo d'identité transmise par le RNPP pour ${data.gerantPrenom} ${data.gerantNom}`} />
-                            ) : (
-                              <figcaption className="rnpp-final__photo-vide">Photo d’identité</figcaption>
-                            )}
-                          </figure>
-                        </div>
-                      </div>
-                    </fieldset>
-
-                    <div className="form-grid">
-                      <Field label="Adresse email du gérant" error={errors.gerantEmail}>
-                        <input
-                          type="email"
-                          aria-invalid={errors.gerantEmail ? 'true' : undefined}
-                          placeholder="nom@exemple.bj"
-                          value={data.gerantEmail}
-                          onChange={(e) => patch({ gerantEmail: e.target.value })}
-                        />
-                      </Field>
-                    </div>
-                  </>
-                )}
               </div>
             )}
 
@@ -1593,8 +1439,10 @@ export default function InscriptionPage() {
                       Formats PDF, JPG, PNG ou WEBP, 5 Mo maximum par fichier.
                       {' '}Les pièces « du gérant » concernent{' '}
                       {data.gerantEstRepresentant === 'non'
-                        ? <strong>{data.gerantPrenom} {data.gerantNom}</strong>
-                        : 'le représentant légal, qui est aussi le gérant'}.
+                        ? (data.gerantNom ? <strong>{data.gerantPrenom} {data.gerantNom}</strong> : 'le gérant indiqué en fin d’étape')
+                        : data.gerantEstRepresentant === 'oui'
+                          ? 'le représentant légal, qui est aussi le gérant'
+                          : 'le gérant de l’agence, que vous indiquerez en fin d’étape'}.
                     </p>
                     {pieces.map((cle) => {
                       const multiple = PIECES_MULTIPLES.includes(cle);
@@ -1662,6 +1510,163 @@ export default function InscriptionPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Identité du représentant légal, telle que transmise par le RNPP
+                    à l'étape 1 : rappelée en fin d'étape, après les pièces. */}
+                <fieldset className={'rnpp-card' + (npiLocked ? ' rnpp-card--verified' : '')}>
+                  <legend className="rnpp-card__legend">
+                    Informations sur le représentant légal
+                    {npiLocked && <span className="rnpp-card__badge">Vérifié</span>}
+                  </legend>
+                  <div className="form-grid">
+                    <Field label="Nom"><span className="form-field__readonly">{data.nom}</span></Field>
+                    <Field label="Prénom(s)"><span className="form-field__readonly">{data.prenom}</span></Field>
+                    <Field label="Date de naissance"><input type="date" value={data.naissance} disabled /></Field>
+                    <Field label="Sexe"><input value={data.sexe} disabled /></Field>
+                    <div className="rnpp-final span-2">
+                      <Field label="Nationalité"><input value={data.nationalite} disabled /></Field>
+                      <Field label="Téléphone"><input type="tel" value={data.tel} disabled /></Field>
+                      <Field label="Adresse de résidence" className="rnpp-final__adresse">
+                        <span className="form-field__readonly">{data.adresse}</span>
+                      </Field>
+                      <figure className="rnpp-final__photo">
+                        {npiLocked && data.photoRnpp ? (
+                          <img src={data.photoRnpp} alt={`Photo d'identité transmise par le RNPP pour ${data.prenom} ${data.nom}`} />
+                        ) : (
+                          <figcaption className="rnpp-final__photo-vide">Photo d’identité</figcaption>
+                        )}
+                      </figure>
+                    </div>
+                  </div>
+                </fieldset>
+
+                {/* Gérant : pas forcément le représentant légal. */}
+                <div className="field-group gerant-choix">
+                  <span className="field-group__label">
+                    Le représentant légal est-il aussi le gérant de l'agence ?{' '}
+                    <span className="form-field__required" aria-hidden="true">*</span>
+                  </span>
+                  <Choix
+                    name="gerantEstRepresentant"
+                    options={[
+                      { value: 'oui', label: "Oui, il gère lui-même l'agence" },
+                      { value: 'non', label: 'Non, le gérant est une autre personne' }
+                    ]}
+                    value={data.gerantEstRepresentant}
+                    onChange={choisirGerant}
+                  />
+                  <span className="field-hint">
+                    Le gérant dirige l'activité de l'agence au quotidien. Sa pièce d'identité, son
+                    curriculum vitae, ses attestations d'expérience et son casier judiciaire sont
+                    demandés au dossier.
+                  </span>
+                </div>
+
+                {data.gerantEstRepresentant === 'non' && (
+                  <>
+                    <div className="npi-lookup">
+                      <div className="npi-lookup__header">
+                        <span className="npi-lookup__title">Identification du gérant via le RNPP (ANIP)</span>
+                      </div>
+                      <p className="npi-lookup__hint">
+                        Un code de confirmation est envoyé par SMS au numéro du gérant inscrit au RNPP :
+                        le gérant doit être joignable pour vous le communiquer.
+                      </p>
+                      {gerantPhase !== 'otp' && gerantPhase !== 'verifying' && (
+                        <div className="npi-lookup__row">
+                          <input
+                            inputMode="numeric"
+                            maxLength={10}
+                            placeholder="NPI du gérant — ex. 0123456789"
+                            autoComplete="off"
+                            aria-label="NPI du gérant"
+                            aria-invalid={errors.gerantNpi ? 'true' : undefined}
+                            value={data.gerantNpi}
+                            disabled={gerantLocked || gerantPhase === 'loading'}
+                            onChange={(e) => patch({ gerantNpi: e.target.value })}
+                          />
+                          <button type="button" className="btn btn-primary" disabled={gerantLocked || gerantPhase === 'loading'} onClick={gerantLookup}>
+                            Vérifier le NPI
+                          </button>
+                        </div>
+                      )}
+                      {(gerantPhase === 'otp' || gerantPhase === 'verifying') && (
+                        <div className="npi-lookup__otp">
+                          <p className="npi-lookup__otp-npi">NPI du gérant : {data.gerantNpi}</p>
+                          <p className="npi-lookup__hint">{gerantStatus?.hint}</p>
+                          <div className="npi-lookup__row">
+                            <input
+                              inputMode="numeric"
+                              maxLength={6}
+                              placeholder="Code de vérification"
+                              autoComplete="one-time-code"
+                              aria-label="Code de vérification du gérant"
+                              value={gerantOtp}
+                              disabled={gerantPhase === 'verifying'}
+                              onChange={(e) => setGerantOtp(e.target.value)}
+                            />
+                            <button type="button" className="btn btn-primary" disabled={gerantPhase === 'verifying'} onClick={gerantVerifyOtp}>
+                              Valider le code
+                            </button>
+                          </div>
+                          <div className="npi-lookup__otp-actions">
+                            <button type="button" className="npi-lookup__link" onClick={gerantResendOtp}>Renvoyer le code</button>
+                            <button type="button" className="npi-lookup__link" onClick={() => annulerVerificationGerant()}>Modifier le NPI</button>
+                          </div>
+                        </div>
+                      )}
+                      {gerantStatus && gerantStatus.kind && <Status status={gerantStatus} />}
+                      {errors.gerantNpi && <Status status={{ kind: 'error', text: errors.gerantNpi }} />}
+                      {gerantLocked && (
+                        <div className="npi-lookup__otp-actions">
+                          <button type="button" className="npi-lookup__link" onClick={() => annulerVerificationGerant()}>Modifier le NPI</button>
+                        </div>
+                      )}
+                      {manque('gerantNpi') && gerantPhase === 'idle' && !gerantStatus && (
+                        <span className="field-hint">Vérifiez le NPI du gérant pour continuer.</span>
+                      )}
+                    </div>
+
+                    <fieldset className={'rnpp-card' + (gerantLocked ? ' rnpp-card--verified' : '')}>
+                      <legend className="rnpp-card__legend">
+                        Informations sur le gérant
+                        {gerantLocked && <span className="rnpp-card__badge">Vérifié</span>}
+                      </legend>
+                      <div className="form-grid">
+                        <Field label="Nom"><span className="form-field__readonly">{data.gerantNom}</span></Field>
+                        <Field label="Prénom(s)"><span className="form-field__readonly">{data.gerantPrenom}</span></Field>
+                        <Field label="Date de naissance"><input type="date" value={data.gerantNaissance} disabled /></Field>
+                        <Field label="Sexe"><input value={data.gerantSexe} disabled /></Field>
+                        <div className="rnpp-final span-2">
+                          <Field label="Nationalité"><input value={data.gerantNationalite} disabled /></Field>
+                          <Field label="Téléphone"><input type="tel" value={data.gerantTel} disabled /></Field>
+                          <Field label="Adresse de résidence" className="rnpp-final__adresse">
+                            <span className="form-field__readonly">{data.gerantAdresse}</span>
+                          </Field>
+                          <figure className="rnpp-final__photo">
+                            {gerantLocked && data.gerantPhoto ? (
+                              <img src={data.gerantPhoto} alt={`Photo d'identité transmise par le RNPP pour ${data.gerantPrenom} ${data.gerantNom}`} />
+                            ) : (
+                              <figcaption className="rnpp-final__photo-vide">Photo d’identité</figcaption>
+                            )}
+                          </figure>
+                        </div>
+                      </div>
+                    </fieldset>
+
+                    <div className="form-grid">
+                      <Field label="Adresse email du gérant" error={errors.gerantEmail}>
+                        <input
+                          type="email"
+                          aria-invalid={errors.gerantEmail ? 'true' : undefined}
+                          placeholder="nom@exemple.bj"
+                          value={data.gerantEmail}
+                          onChange={(e) => patch({ gerantEmail: e.target.value })}
+                        />
+                      </Field>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
