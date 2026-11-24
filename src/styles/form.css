@@ -1612,3 +1612,94 @@
 .frais { margin-top: 14px; }
 .frais__total { padding-top: 8px; border-top: 1px solid var(--color-border-input); font-weight: 700; }
 .frais__total dd { color: var(--color-primary-dark); }
+
+/* --- Gérant : deux boutons de choix rapide (étape 4) ------------------------ */
+
+.gerant-rapide {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.gerant-rapide__btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 72px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--color-border-input);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  text-align: left;
+  color: var(--color-text-soft);
+  transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
+}
+
+.gerant-rapide__btn:hover {
+  border-color: var(--color-primary);
+}
+
+.gerant-rapide__btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.gerant-rapide__btn.is-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  box-shadow: 0 8px 20px -14px rgba(29, 79, 216, 0.8);
+}
+
+/* Pastille : vide tant que le choix n'est pas fait, cochée en bleu ensuite. */
+.gerant-rapide__coche {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border-input);
+  font-size: 13px;
+  font-weight: 700;
+  color: transparent;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.gerant-rapide__btn.is-active .gerant-rapide__coche {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #FFFFFF;
+}
+
+.gerant-rapide__texte {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.gerant-rapide__texte strong {
+  font-size: 14.5px;
+  color: var(--color-text);
+}
+
+.gerant-rapide__btn.is-active .gerant-rapide__texte strong {
+  color: var(--color-primary-dark);
+}
+
+.gerant-rapide__texte small {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--color-muted);
+  overflow-wrap: anywhere;
+}
+
+.gerant-choix--manquant .gerant-rapide__btn {
+  border-color: var(--color-danger-border);
+}
+
+@media (max-width: 560px) {
+  .gerant-rapide {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
